@@ -1,0 +1,115 @@
+@{layout('')}
+@{title(config.name)}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=11" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="robots" content="all,follow" />
+	<link href="//cdn.componentator.com/spa.min@19.css" rel="stylesheet" />
+	<script src="//cdn.componentator.com/spa.min@19.js"></script>
+	@{import('meta', 'head', 'default.js + func.js + ui.js', 'ui.css + default.css', 'favicon.ico')}
+</head>
+<body data---="exec">
+
+	<div data---="LAZY message__null__style:2"></div>
+	<div data---="LAZY approve"></div>
+	<div data---="loading__null__style:2"></div>
+
+	<div>
+		<div class="maintabs">
+			<ul data---="selected__NAV.url__selector:li;datasource:common.plugins" data-bind="common.plugins__template">
+				<script type="text/html">
+					{{ foreach m in value }}
+					<li class="exec" data-exec="common/redirect" data-if="{{ m.url }}">
+						<i class="{{ m.icon }}"></i>
+						{{ m.name }}
+					</li>
+					{{ end }}
+				</script>
+			</ul>
+			<div data---="virtualwire__common.page"></div>
+		</div>
+
+		<div class="parts" id="mainparts">
+			@{foreach m in model}
+			<div data---="part__common.page__if:plugin@{m.id};url:@{#}/_@{m.id}/index.html;reload:?/reload;delayloading:600" class="hidden invisible" data-pluginname="@{m.name}" data-pluginid="@{m.id}" data-pluginicon="@{m.icon}" data-pluginimport="@{m.import}"></div>
+			@{end}
+		</div>
+		<div data---="part__common.page__if:mainplugins;url:/parts/index.html;reload:?/reload;delayloading:600" class="hidden invisible"></div>
+	</div>
+
+	<script>
+
+		ON('@flag showloading', function() {
+			SETTER('loading/show');
+		});
+
+		ON('@flag hideloading', function() {
+			SETTER('loading/hide', 1000);
+		});
+
+		// NAV.custom(false);
+		NAV.clientside('.jR');
+
+		var common = {};
+
+		(function() {
+
+			WAPI({ url: '/' });
+
+			var plugins = [];
+			var nodes = $('#mainparts').find('> div').toArray();
+
+			nodes.wait(function(node, next) {
+
+				var el = $(node);
+				var obj = {};
+				obj.id = el.attrd('pluginid');
+				obj.name = el.attrd('pluginname');
+				obj.icon = el.attrd('pluginicon');
+				obj.import = el.attrd('pluginimport');
+				obj.url = '/' + obj.id + '/';
+				obj.import && IMPORT(obj.import);
+				plugins.push(obj);
+
+				ROUTE(obj.url, function() {
+					SET('common.page', 'plugin' + obj.id);
+				}, 'ready');
+
+				next();
+
+			}, function() {
+				SET('common.plugins', plugins);
+			});
+
+		})();
+
+		PLUGIN('common', function(exports) {
+			exports.redirect = function(el) {
+				REDIRECT(el.attrd('if'));
+			};
+		});
+
+		ROUTE('/', function() {
+			SET('common.page', 'mainplugins');
+		}, 'ready');
+
+		function checkready() {
+			return common.plugins;
+		}
+
+		MIDDLEWARE('ready', function(next) {
+			if (checkready())
+				next();
+			else
+				WAIT(checkready, next);
+		});
+
+	</script>
+
+</body>
+</html>

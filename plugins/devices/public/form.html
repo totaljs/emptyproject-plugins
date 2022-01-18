@@ -1,0 +1,71 @@
+<div data---="box__common.form__if:~PATH~;align:right;background:false;transparent:true;icon:far fa-cctv;autofocus:true;reload:?/reload;scrollbar:1;submit:?/submit;width:550" class="hidden" data-scope="~PATH~">
+	<div class="~PATH~">
+
+		<div class="padding">
+
+			<div class="caption m">
+				<label>@(Meta data)</label>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 m">
+					<div data---="input__?.name__required:1">@(Name)</div>
+				</div>
+				<div class="col-md-6 m">
+					<div data---="input__?.location__required:1;icon:fa fa-map-marker">@(Location)</div>
+				</div>
+				<div class="col-md-6 m">
+					<div data---="input__?.reference"><b>@(Reference)</b></div>
+					<div class="help">@(It may contain a device identifier)</div>
+				</div>
+				<div class="col-md-6 m">
+					<div data---="input__?.sn__icon:fa fa-barcode">@(Serial number)</div>
+					<div class="help">@(Device serial number)</div>
+				</div>
+			</div>
+
+			<hr />
+
+			<div data---="input__?.note">@(Quick note)</div>
+			<div class="help m">@(You can define a simple note that you see directly in the list of devices)</div>
+
+		</div>
+		<hr class="nmt" style="margin-bottom:5px" />
+		<div class="padding">
+
+			<div class="caption m">
+				<label>@(Additional information)</label>
+			</div>
+
+			<div data---="inputtags__?.tags__placeholder:@(Type a tag and press enter)" class="m">@(Tags)</div>
+			<div data---="input__?.notes__type:multiline;monospace:1" class="m">@(Notes)</div>
+
+		</div>
+	</div>
+	<nav data---="validate__?">
+		<button name="submit" disabled><i class="fa fa-check-circle"></i>@(SUBMIT)</button>
+		<button name="cancel">@(Cancel)</button>
+	</nav>
+</div>
+
+<script>
+
+	PLUGIN('~PATH~', function(exports) {
+
+		exports.reload = function(com) {
+			var model = exports.data;
+			var id = model ? model.id : null;
+			com.reconfigure({ title: id ? '@(Update device)' : '@(Register new device)' });
+		};
+
+		exports.submit = function(hide) {
+			var model = exports.form;
+			WAPI('devices_save @showloading', model, ASETTER('message/response @hideloading', function(response) {
+				EXEC('plugindevices/refresh');
+				hide();
+			}));
+		};
+
+	});
+
+</script>

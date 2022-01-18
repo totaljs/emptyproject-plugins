@@ -1,0 +1,77 @@
+<style>
+	.~PATH~ code { font-size: 11px; font-family: Menlo, Consolas, monospace; color: gray; }
+	.~PATH~ .icon { width: 14px; margin-right: 5px; text-align: center; }
+	.~PATH~ .highlight { background-color: rgba(0,0,0,0.03); }
+	.~PATH~ .offline .dg-col { background-color: rgba(246,206,205,0.1); }
+	.~PATH~ .online { margin-right: 5px; font-size: 11px; }
+</style>
+
+<div class="virtualwire hidden" data-if="~PATH~">
+	<div class="toolbar">
+		<button class="exec" data-exec="~PATH~/create"><i class="fa fa-plus-circle green"></i>@(Add)</button>
+		<button class="exec" data-exec="~PATH~/options" data-bind="~PATH~.selected__enabled" disabled><i class="fa fa-cog"></i>@(Options)</button>
+	</div>
+</div>
+
+<div class="~PATH~" data-scope="~PATH~">
+	<div data---="datagrid__?.items__margin:0;parent:auto;noborder:1;exec:?/page;highlight:1;click:?.selected;dblclick:?/realtime;button:?/buttons;checkbox:0;changed:?.changed;$assign:?.datagrid">
+		<script type="text/plain">
+			[
+				{ name: 'id', text: '@(ID)', width: 120, class: 'gray', hide: true },
+				{ name: 'name', text: '@(Name)', width: 200, class: 'b', template: '<i class="fas online fa-dot-circle {{ if isonline }}green{{ else }}red{{ fi}}"></i>{{ name }}{{ if isattachment }}<i class="far fa-paperclip ml5"></i>{{ fi }}' },
+				{ name: 'location', text: '@(Location)', width: 200 },
+				{ name: 'note', text: '@(Note)', width: 200 },
+				{ name: 'reference', text: '@(Reference)', template: '<code>{{ reference }}</code>' },
+				{ name: 'controller_name', text: '@(Controller)' },
+				{ name: 'isonline', text: '@(Online)', align: 1, align: 1, type: 'boolean', width: 100, options: [{ value: true, text: 'Online' }, { value: false, text: 'Offline' }] },
+				{ name: 'dtupdated', text: '@(Updated)', align: 1, format: '[date]', align: 1 },
+				{ name: 'dtcreated', text: '@(Created)', align: 1, format: '[date]', align: 1 },
+				{ type: 'controls', template: '<button name="edit"><i class="far fa-pencil"></i></button><button name="remove"><i class="far fa-trash-o red"></i></button>' }
+			]
+		</script>
+	</div>
+</div>
+
+<div data---="importer__common.form__if:~PATH~form;url:/_devices/form.html"></div>
+
+<script>
+
+	PLUGIN('~PATH~', function(exports) {
+
+		exports.reload = function() {
+			exports.refresh();
+		};
+
+		exports.refresh = function() {
+			WAPI('devices_list', '?.items');
+		};
+
+		exports.edit = function(row) {
+			WAPI('devices_read/' + row.id, function(response) {
+				var path = exports.name + 'form';
+				SET(path + ' @reset', response);
+				SET('common.form', path);
+			});
+		};
+
+		exports.remove = function(el) {
+			var id = ATTRD(el);
+			var item = exports.data.items.findItem('id', id);
+			SETTER('approve/show', '@(Are you sure you want to remove <b>"{name}"</b>?)'.arg(item, 'escape'), '"far fa-trash-alt" @(Remove)', function() {
+				exports.scope();
+				WAPI('devices_remove/' + id, ASETTER('message/response', '@(Device has been removed successfully)', exports.refresh));
+			});
+		};
+
+		exports.buttons = function(btn, row) {
+			exports[btn](row);
+		};
+
+		exports.create = function() {
+			var path = exports.name + 'form';
+			SET(path + ' @default', {});
+			SET('common.form', path);
+		};
+
+	});
+</script>
